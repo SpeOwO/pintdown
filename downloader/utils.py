@@ -1,16 +1,11 @@
-from playwright.sync_api import sync_playwright
-import re
+import os
 
-def get_pin_count(page):
-  pin_count_element = page.locator('div[data-test-id="pin-count"]')
-  # 텍스트 추출
-  full_text = pin_count_element.inner_text()
-  # 숫자 추출
-  match = re.search(r'\d+', full_text)
-  if match:
-      pin_count = int(match.group())
-      print(f"핀 개수: {pin_count}")
-  else:
-      print("핀 개수를 찾을 수 없습니다.")
-
-  return pin_count
+def save_file(file, save_dir: str, filename: str):
+    if not filename:
+        filename = os.path.basename(url.split("?")[0])  # 쿼리 제거
+    save_path = os.path.join(save_dir, filename)
+    try:
+        with open(save_path, "wb") as f:
+            f.write(file)
+    except Exception as e:
+        print("오류 발생:", e)
