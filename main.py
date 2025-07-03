@@ -7,8 +7,9 @@ def run(board_url: str, save_path: str):
     
     download_image(urls[0], save_path, "test1.jpg")
 
-# example
-board_url = "https://kr.pinterest.com/flat1000/wallpaper/"
-save_path = "d:\test"
+if __name__ == '__main__':
+    # example
+    board_url = "https://kr.pinterest.com/flat1000/wallpaper/"
+    save_path = "d:/test"
 
-run(board_url, save_path)
+    run(board_url, save_path)

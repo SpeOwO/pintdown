@@ -9,3 +9,4 @@ def save_file(file, save_dir: str, filename: str):
             f.write(file)
     except Exception as e:
         print("error occurs", e)
+        raise Exception("Save Error")

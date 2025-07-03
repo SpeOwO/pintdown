@@ -54,7 +54,7 @@ def extract_urls(board_url: str):
         # close
         browser.close()
     
-    print(total_pins-errors, " success of", total_pins)
+    print(total_pins - len(errors), " success of", total_pins)
     return image_urls, errors
 
 def get_pin_count(page):
