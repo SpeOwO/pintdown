@@ -1,4 +1,6 @@
 import os
+import time
+import random
 
 def save_file(file, save_dir: str, filename: str):
     if not filename:
@@ -10,3 +12,6 @@ def save_file(file, save_dir: str, filename: str):
     except Exception as e:
         print("error occurs", e)
         raise Exception("Save Error")
+
+def sleep():
+    time.sleep(random.uniform(1.0, 2.0))

@@ -12,4 +12,8 @@ def download_image(url: str, save_dir: str, filename: str = None):
         utils.save_file(response.content, save_dir, filename)
         print(f"[✔] download succes: {filename}")
     except Exception as e:
-        print(f"[✘] download failure: {url} - {e}")
+        if response.status_code == 403 and "originals" in url:
+            url = url.replace("originals", "1200x")
+            download_image(url, save_dir, filename)
+        else:
+            print(f"[✘] download failure: {url} - {e}")
