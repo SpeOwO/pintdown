@@ -1,6 +1,6 @@
 import os
 import requests
-import utils
+from . import utils
 
 def download_image(url: str, save_dir: str, filename: str = None):
     try:

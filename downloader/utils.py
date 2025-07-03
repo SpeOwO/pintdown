@@ -2,10 +2,10 @@ import os
 
 def save_file(file, save_dir: str, filename: str):
     if not filename:
-        filename = os.path.basename(url.split("?")[0])  # ì¿¼ë¦¬ ì œê±°
+        filename = os.path.basename(url.split("?")[0])  # Äõ¸® Á¦°Å
     save_path = os.path.join(save_dir, filename)
     try:
         with open(save_path, "wb") as f:
             f.write(file)
     except Exception as e:
-        print("ì˜¤ë¥˜ ë°œìƒ:", e)
+        print("¿À·ù ¹ß»ı:", e)
