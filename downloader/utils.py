@@ -1,17 +1,49 @@
 import os
 import time
 import random
+import re
 
-def save_file(file, save_dir: str, filename: str):
-    if not filename:
-        filename = os.path.basename(url.split("?")[0])  # remove query
-    save_path = os.path.join(save_dir, filename)
+def sanitize_filename(filename: str) -> str:
+    """
+    Sanitize a filename by removing or replacing invalid characters.
+    This helps avoid issues on Windows and other file systems.
+    """
+    return re.sub(r'[\\/*?:"<>|]', "_", filename)
+
+def save_file(file: bytes, save_dir: str, filename: str):
+    """
+    Save binary data (e.g. image) to the specified directory and filename.
+    Ensures directory exists, and filename is valid.
+    """
     try:
+        # Normalize the directory path (handles mixed slashes)
+        save_dir = os.path.normpath(save_dir)
+
+        # Create the directory if it does not exist
+        os.makedirs(save_dir, exist_ok=True)
+
+        if not filename:
+            raise ValueError("Filename must be provided")
+
+        # Sanitize filename to prevent OS-level issues
+        filename = sanitize_filename(filename)
+
+        # Full path to save the file
+        save_path = os.path.join(save_dir, filename)
+
+        # Write the binary content to file
         with open(save_path, "wb") as f:
             f.write(file)
+
+        print(f"[?] Saved: {save_path}")
+
     except Exception as e:
-        print("error occurs", e)
-        raise Exception("Save Error")
+        print(f"[?] Save failed (path: {save_path}) - {e}")
+        raise Exception("Save Error") from e
 
 def sleep():
+    """
+    Sleep for a random duration between 1.0 and 2.0 seconds.
+    Helps avoid being flagged as a bot during repeated requests.
+    """
     time.sleep(random.uniform(1.0, 2.0))
