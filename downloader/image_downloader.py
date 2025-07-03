@@ -4,11 +4,12 @@ from . import utils
 
 def download_image(url: str, save_dir: str, filename: str = None):
     try:
-        # url에 리퀘스트 요청
+        # request on url
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        # 파일 저장
+
+        # save content as a file
         utils.save_file(response.content, save_dir, filename)
-        print(f"[✔] 다운로드 성공: {filename}")
+        print(f"[✔] download succes: {filename}")
     except Exception as e:
-        print(f"[✘] 다운로드 실패: {url} - {e}")
+        print(f"[✘] download failure: {url} - {e}")
