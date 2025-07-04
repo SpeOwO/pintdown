@@ -2,7 +2,7 @@ import os
 import requests
 from . import utils
 
-def download_image(url: str, save_dir: str, filename: str = None):
+def download_image(url: str | None, save_dir: str, filename: str = None):
     if url == None:
         print(f"[✘] download failure: {url} - {e}")
         return
