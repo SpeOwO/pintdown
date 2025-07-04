@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright, Page
 import re
 
 class PinterestScraper:
-    def __init__(self, board_url: str, headless: bool = False):
+    def __init__(self, board_url: str, headless: bool = True):
         self.board_url = board_url
         self.headless = headless
         self.image_urls = []
