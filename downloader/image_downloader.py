@@ -12,7 +12,7 @@ class ImageDownloader:
         self.save_dir = None
         self.timeout = timeout
     
-    def reset():
+    def reset(self):
         self.save_dir = None
 
     def download(self, url: str | None, filename: str = None):
