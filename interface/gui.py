@@ -2,24 +2,27 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 import threading
+import logging
 import sys
 
 from downloader.board_scraper import PinterestScraper
 from downloader.image_downloader import ImageDownloader
 from downloader.utils import sleep
 
+# logging 핸들러: 로그 메시지를 Tkinter 텍스트 위젯에 출력
+class TextHandler(logging.Handler):
+    def __init__(self, text_widget):
+        super().__init__()
+        self.text_widget = text_widget
 
-# stdout/stderr 리디렉션 클래스
-class RedirectText:
-    def __init__(self, widget):
-        self.widget = widget
+    def emit(self, record):
+        msg = self.format(record)
+        # GUI 스레드에서 안전하게 UI 업데이트
+        self.text_widget.after(0, self.append_text, msg + "\n")
 
-    def write(self, string):
-        self.widget.insert(tk.END, string)
-        self.widget.see(tk.END)  # 자동 스크롤
-
-    def flush(self):
-        pass  # 일부 시스템에서 필요함
+    def append_text(self, msg):
+        self.text_widget.insert(tk.END, msg)
+        self.text_widget.see(tk.END)  # 자동 스크롤
 
 
 class PinterestApp:
@@ -43,12 +46,31 @@ class PinterestApp:
 
         # 로그 텍스트창
         tk.Label(root, text="Log:").pack()
-        self.log_text = ScrolledText(root, height=15, width=80)
+        self.log_text = ScrolledText(root, height=15, width=80, state='normal')
         self.log_text.pack()
 
-        # stdout/stderr을 텍스트창으로 리디렉션
-        sys.stdout = RedirectText(self.log_text)
-        sys.stderr = RedirectText(self.log_text)
+        # 로거 세팅
+        self.logger = logging.getLogger("pintdown")
+        self.logger.setLevel(logging.DEBUG)
+
+        # GUI 핸들러 (INFO 이상만 출력)
+        gui_handler = TextHandler(self.log_text)
+        gui_handler.setLevel(logging.INFO)
+        gui_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        gui_handler.setFormatter(gui_formatter)
+
+        # 콘솔 핸들러 (DEBUG 이상 모두 출력)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
+        console_formatter = logging.Formatter('[%(levelname)s] %(message)s')
+        console_handler.setFormatter(console_formatter)
+
+        # 중복 핸들러 방지
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
+
+        self.logger.addHandler(gui_handler)
+        self.logger.addHandler(console_handler)
 
     def browse_folder(self):
         folder_selected = filedialog.askdirectory()
@@ -57,7 +79,6 @@ class PinterestApp:
             self.path_entry.insert(0, folder_selected)
 
     def run_scraper_thread(self):
-        # GUI 멈춤 방지를 위한 백그라운드 실행
         threading.Thread(target=self.run_scraper, daemon=True).start()
 
     def run_scraper(self):
@@ -67,13 +88,13 @@ class PinterestApp:
             messagebox.showwarning("Input Error", "Please enter both URL and save directory.")
             return
 
-        print(f"\n[INFO] Start scraping: {url}")
+        self.logger.info(f"Start scraping: {url}")
         try:
             scraper = PinterestScraper()
             scraper.run(url)
             url_list, error_list = scraper.get_results()
 
-            print(f"[INFO] Collected {len(url_list)} image URLs ({len(error_list)} errors)")
+            self.logger.info(f"Collected {len(url_list)} image URLs ({len(error_list)} errors)")
 
             downloader = ImageDownloader()
             downloader.run(
@@ -82,10 +103,10 @@ class PinterestApp:
                 name_fn=lambda url, idx: f"pin_{idx}.jpg"
             )
 
-            print(f"[✔] Done: {len(url_list)} images downloaded.")
+            self.logger.info(f"Done: {len(url_list)} images downloaded.")
             messagebox.showinfo("Done", f"Downloaded {len(url_list)} images.")
         except Exception as e:
-            print(f"[✘] Error occurred: {e}")
+            self.logger.error(f"Error occurred: {e}")
             messagebox.showerror("Error", str(e))
 
 

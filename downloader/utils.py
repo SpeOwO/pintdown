@@ -2,6 +2,9 @@ import os
 import time
 import random
 import re
+import logging
+
+logger = logging.getLogger("pintdown.utils")
 
 def sanitize_filename(filename: str) -> str:
     """
@@ -35,10 +38,10 @@ def save_file(file: bytes, save_dir: str, filename: str):
         with open(save_path, "wb") as f:
             f.write(file)
 
-        print(f"[?] Saved: {save_path}")
+        logger.debug(f"Saved file: {save_path}")
 
     except Exception as e:
-        print(f"[?] Save failed (path: {save_path}) - {e}")
+        logger.error(f"Save failed (path: {save_path}) - {e}")
         raise Exception("Save Error") from e
 
 def sleep():
@@ -46,4 +49,6 @@ def sleep():
     Sleep for a random duration between 1.0 and 2.0 seconds.
     Helps avoid being flagged as a bot during repeated requests.
     """
-    time.sleep(random.uniform(1.0, 2.0))
+    duration = random.uniform(1.0, 2.0)
+    logger.debug(f"Sleeping for {duration:.2f} seconds")
+    time.sleep(duration)

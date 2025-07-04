@@ -1,10 +1,12 @@
 import requests
+import logging
 from . import utils
+
+logger = logging.getLogger("pintdown.downloader")
 
 class ImageDownloader:
     def __init__(self, timeout: int = 10):
         """
-        :param save_dir: directory to save images
         :param timeout: request timeout in seconds
         """
         self.save_dir = None
@@ -16,6 +18,10 @@ class ImageDownloader:
         Retries with a fallback URL if 403 error occurs on original URL.
         """
         response = None
+        if not url:
+            logger.warning(f"Skipping download: URL is None or empty (filename={filename})")
+            return
+
         try:
             response = requests.get(url, timeout=self.timeout)
             response.raise_for_status()
@@ -23,23 +29,23 @@ class ImageDownloader:
         except requests.exceptions.RequestException as e:
             if response and response.status_code == 403 and "originals" in url:
                 fallback_url = url.replace("originals", "1200x")
-                print(f"[!] retrying with fallback url: {fallback_url}")
+                logger.info(f"Retrying with fallback URL: {fallback_url}")
                 self.download(fallback_url, filename)
             else:
-                print(f"[✘] request failed: {url} - {e}")
+                logger.error(f"Request failed: {url} - {e}")
             return
 
         try:
             utils.save_file(response.content, self.save_dir, filename)
-            print(f"[✔] download success: {filename}")
+            logger.info(f"Download success: {filename}")
         except Exception as e:
-            print(f"[✘] file save failed: {filename} - {e}")
+            logger.error(f"File save failed: {filename} - {e}")
 
     def run(self, url_list: list[str | None], save_dir: str, name_fn=None):
         self.save_dir = save_dir
         for idx, url in enumerate(url_list):
-            if not url:  # filtering
-                print(f"[!] Skipping invalid URL at index {idx}")
+            if not url:
+                logger.warning(f"Skipping invalid URL at index {idx}")
                 continue
             filename = name_fn(url, idx) if name_fn else None
             self.download(url, filename)
