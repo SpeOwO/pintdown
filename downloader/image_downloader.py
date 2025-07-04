@@ -44,13 +44,19 @@ class ImageDownloader:
         except Exception as e:
             logger.error(f"File save failed: {filename} - {e}")
 
-    def run(self, url_list: list[str | None], save_dir: str, name_fn=None):
+    def run(self, url_list: list[str | None], save_dir: str, name_fn=None, progress_callback=None):
         self.reset()
         self.save_dir = save_dir
+        total = len(url_list)
         for idx, url in enumerate(url_list):
             if not url:
                 logger.warning(f"Skipping invalid URL at index {idx}")
                 continue
             filename = name_fn(url, idx) if name_fn else None
             self.download(url, filename)
-            utils.sleep()
+            
+            if progress_callback:
+                progress_callback(idx + 1, total)
+
+            if idx < total - 1: 
+                utils.sleep()

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
 import threading
 import logging
@@ -43,6 +43,11 @@ class PinterestApp:
         # 버튼
         tk.Button(root, text="Browse...", command=self.browse_folder).pack()
         tk.Button(root, text="Run", command=self.run_scraper_thread).pack()
+
+        # Progress bar
+        tk.Label(root, text="Progress:").pack()
+        self.progress = tk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+        self.progress.pack()
 
         # 로그 텍스트창
         tk.Label(root, text="Log:").pack()
