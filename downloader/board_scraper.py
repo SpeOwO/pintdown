@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright, Page
 import re
 
 class PinterestScraper:
-    def __init__(self, board_url: str, headless: bool = True):
+    def __init__(self, headless: bool = True):
         self.board_url = board_url
         self.headless = headless
         self.image_urls = []
@@ -10,21 +10,22 @@ class PinterestScraper:
         self.target_pin_count = 0
         self.grid_idx = 0
 
-    def run(self):
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
-            page = browser.new_page()
-            page.goto(self.board_url, wait_until="networkidle")
+    def run(board_url: str):
+      self.board_url = board_url
+      with sync_playwright() as p:
+          browser = p.chromium.launch(headless=self.headless)
+          page = browser.new_page()
+          page.goto(self.board_url, wait_until="networkidle")
 
-            self.target_pin_count = self.get_pin_count(page)
-            print(f"[INFO] Target pin count: {self.target_pin_count}")
+          self.target_pin_count = self.get_pin_count(page)
+          print(f"[INFO] Target pin count: {self.target_pin_count}")
 
-            while len(self.image_urls) < self.target_pin_count:
-                result, src = self.process_grid_item(page, self.grid_idx)
-                self.handle_result(result, src)
-                self.grid_idx += 1
+          while len(self.image_urls) < self.target_pin_count:
+              result, src = self.process_grid_item(page, self.grid_idx)
+              self.handle_result(result, src)
+              self.grid_idx += 1
 
-            browser.close()
+          browser.close()
 
     def get_pin_count(self, page: Page) -> int:
         try:
