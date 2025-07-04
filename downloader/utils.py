@@ -49,6 +49,6 @@ def sleep():
     Sleep for a random duration between 1.0 and 1.5 seconds.
     Helps avoid being flagged as a bot during repeated requests.
     """
-    duration = random.uniform(1.0, 1.5)
+    duration = random.uniform(0.5, 1.0)
     logger.debug(f"Sleeping for {duration:.2f} seconds")
     time.sleep(duration)
