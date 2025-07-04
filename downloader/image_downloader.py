@@ -12,13 +12,18 @@ def download_image(url: str | None, save_dir: str, filename: str = None):
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        utils.save_file(response.content, save_dir, filename)
-        print(f"[✔] download success: {filename}")
-
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         if response and response.status_code == 403 and "originals" in url:
             fallback_url = url.replace("originals", "1200x")
             print(f"[!] retrying with fallback url: {fallback_url}")
             download_image(fallback_url, save_dir, filename)
+            
         else:
-            print(f"[✘] download failure: {url} - {e}")
+            print(f"[✘] request failed: {url} - {e}")
+        return
+
+    try:
+        utils.save_file(response.content, save_dir, filename)
+        print(f"[✔] download success: {filename}")
+    except Exception as e:
+        print(f"[✘] file save failed: {filename} - {e}")
