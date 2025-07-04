@@ -12,7 +12,15 @@ class PinterestScraper:
         self.target_pin_count = 0
         self.grid_idx = 0
 
+    def reset(self):
+        self.board_url = None
+        self.image_urls.clear()
+        self.errors.clear()
+        self.target_pin_count = 0
+        self.grid_idx = 0
+
     def run(self, board_url: str):
+        self.reset()
         self.board_url = board_url
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)

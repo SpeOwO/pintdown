@@ -11,6 +11,9 @@ class ImageDownloader:
         """
         self.save_dir = None
         self.timeout = timeout
+    
+    def reset():
+        self.save_dir = None
 
     def download(self, url: str | None, filename: str = None):
         """
@@ -42,6 +45,7 @@ class ImageDownloader:
             logger.error(f"File save failed: {filename} - {e}")
 
     def run(self, url_list: list[str | None], save_dir: str, name_fn=None):
+        self.reset()
         self.save_dir = save_dir
         for idx, url in enumerate(url_list):
             if not url:
