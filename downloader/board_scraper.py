@@ -1,71 +1,79 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Page
 import re
 
-def extract_urls(board_url: str):
-    image_urls = []
-    errors = []
+class PinterestScraper:
+    def __init__(self, board_url: str, headless: bool = False):
+        self.board_url = board_url
+        self.headless = headless
+        self.image_urls = []
+        self.errors = []
+        self.target_pin_count = 0
+        self.grid_idx = 0
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
-        page.goto(board_url, wait_until="networkidle")
+    def run(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=self.headless)
+            page = browser.new_page()
+            page.goto(self.board_url, wait_until="networkidle")
 
-        # 핀 개수 판단
-        target_pin_count = get_pin_count(page)
-        print(f"[INFO] Target pin count: {target_pin_count}")
+            self.target_pin_count = self.get_pin_count(page)
+            print(f"[INFO] Target pin count: {self.target_pin_count}")
 
-        grid_idx = 0
-        while len(image_urls) < target_pin_count:
-            grid_selector = f'div[data-grid-item-idx="{grid_idx}"]'
-            grid_elem = page.locator(grid_selector)
+            while len(self.image_urls) < self.target_pin_count:
+                result, src = self.process_grid_item(page, self.grid_idx)
+                self.handle_result(result, src)
+                self.grid_idx += 1
 
-            if grid_elem.count() == 0:
-                grid_idx += 1
-                continue
+            browser.close()
 
-            try:
-                # scroll to show img
-                grid_elem.scroll_into_view_if_needed(timeout=1500)
-                pin_card = grid_elem.locator('[aria-label="핀 카드"]')
-                if pin_card.count() == 0:
-                    # increase target pin count if it is not pin
-                    target_pin_count += 1
-                    grid_idx += 1
-                    continue
+    def get_pin_count(self, page: Page) -> int:
+        try:
+            pin_count_element = page.locator('div[data-test-id="pin-count"]')
+            full_text = pin_count_element.inner_text()
+            match = re.search(r'\d+', full_text)
+            if match:
+                return int(match.group())
+        except Exception as e:
+            print(f"[WARN] Could not get pin count: {e}")
 
-                img_locator = pin_card.locator("img")
-                if img_locator.count() == 0:
-                    errors.append(grid_idx)
-                    image_urls.append(None)
-                    grid_idx += 1
-                    continue
+        print("[WARN] Pin count not found. Fallback to 0.")
+        return 0
 
-                src = img_locator.get_attribute("src")
-                if src and "originals" not in src:
-                    src = src.replace("/236x/", "/originals/")
-                image_urls.append(src)
+    def process_grid_item(self, page: Page, grid_idx: int):
+        grid_selector = f'div[data-grid-item-idx="{grid_idx}"]'
+        grid_elem = page.locator(grid_selector)
 
-            except Exception as e:
-                print(f"[ERROR] Grid index {grid_idx}: {e}")
-                errors.append(grid_idx)
-                image_urls.append(None)
+        if grid_elem.count() == 0:
+            return "not_loaded", None
 
-            grid_idx += 1
+        try:
+            grid_elem.scroll_into_view_if_needed(timeout=1500)
 
-        browser.close()
+            pin_card = grid_elem.locator('[aria-label="핀 카드"]')
+            if pin_card.count() == 0:
+                return "not_pin", None
 
-    print(f"[RESULT] Collected {len(image_urls) - len(errors)} images with {len(errors)} errors.")
-    return image_urls, errors
+            img_locator = pin_card.locator("img")
+            if img_locator.count() == 0:
+                return "error", None
 
-def get_pin_count(page):
-    try:
-        pin_count_element = page.locator('div[data-test-id="pin-count"]')
-        full_text = pin_count_element.inner_text()
-        match = re.search(r'\d+', full_text)
-        if match:
-            return int(match.group())
-    except:
-        pass
+            src = img_locator.get_attribute("src")
+            if src and "originals" not in src:
+                src = src.replace("/236x/", "/originals/")
+            return "success", src
 
-    print("[WARN] Pin count not found. Fallback to 0.")
-    return 0
+        except Exception as e:
+            print(f"[ERROR] Grid index {grid_idx}: {e}")
+            return "error", None
+
+    def handle_result(self, result: str, src: str | None):
+        if result == "not_pin":
+            self.target_pin_count += 1
+        elif result == "error":
+            self.errors.append(self.grid_idx)
+            self.image_urls.append(None)
+        elif result == "success":
+            self.image_urls.append(src)
+
+    def get_results(self):
+        return self.image_urls, self.errors
