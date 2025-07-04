@@ -2,30 +2,30 @@ from playwright.sync_api import sync_playwright, Page
 import re
 
 class PinterestScraper:
-    def __init__(self, headless: bool = True):
-        self.board_url = board_url
-        self.headless = headless
+    def __init__(self):
+        self.board_url = None
         self.image_urls = []
         self.errors = []
         self.target_pin_count = 0
         self.grid_idx = 0
 
-    def run(board_url: str):
-      self.board_url = board_url
-      with sync_playwright() as p:
-          browser = p.chromium.launch(headless=self.headless)
-          page = browser.new_page()
-          page.goto(self.board_url, wait_until="networkidle")
+    def run(self, board_url: str):
+        self.board_url = board_url
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(self.board_url, wait_until="networkidle")
 
-          self.target_pin_count = self.get_pin_count(page)
-          print(f"[INFO] Target pin count: {self.target_pin_count}")
+            self.original_pin_count = self.get_pin_count(page)
+            self.target_pin_count = self.original_pin_count  # 이건 계속 업데이트됨
+            print(f"[INFO] Target pin count: {self.target_pin_count}")
 
-          while len(self.image_urls) < self.target_pin_count:
-              result, src = self.process_grid_item(page, self.grid_idx)
-              self.handle_result(result, src)
-              self.grid_idx += 1
+            while len(self.image_urls) < self.original_pin_count:
+                result, src = self.process_grid_item(page, self.grid_idx)
+                self.handle_result(result, src)
+                self.grid_idx += 1
 
-          browser.close()
+            browser.close()
 
     def get_pin_count(self, page: Page) -> int:
         try:
@@ -50,7 +50,7 @@ class PinterestScraper:
         try:
             grid_elem.scroll_into_view_if_needed(timeout=1500)
 
-            pin_card = grid_elem.locator('[aria-label="핀 카드"]')
+            pin_card = grid_elem.locator('[data-test-id="pin"]')
             if pin_card.count() == 0:
                 return "not_pin", None
 

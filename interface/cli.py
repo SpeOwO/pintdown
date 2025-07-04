@@ -8,6 +8,7 @@ def main():
 
   scraper = PinterestScraper()
   scraper.run(board_url)
-  urls, errors = scraper.get_results()
+  url_list, errors = scraper.get_results()
 
-  downloader = ImageDownloader(save_dir="downloads")
+  downloader = ImageDownloader()
+  downloader.run(url_list = url_list, save_dir = save_dir, name_fn = lambda url, idx: f"pin_{idx}.jpg")

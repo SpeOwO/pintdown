@@ -2,12 +2,12 @@ import requests
 from . import utils
 
 class ImageDownloader:
-    def __init__(self, save_dir: str, timeout: int = 10):
+    def __init__(self, timeout: int = 10):
         """
         :param save_dir: directory to save images
         :param timeout: request timeout in seconds
         """
-        self.save_dir = save_dir
+        self.save_dir = None
         self.timeout = timeout
 
     def download(self, url: str | None, filename: str = None):
@@ -35,11 +35,12 @@ class ImageDownloader:
         except Exception as e:
             print(f"[✘] file save failed: {filename} - {e}")
 
-def run(self, url_list: list[str | None], name_fn=None):
-    for idx, url in enumerate(url_list):
-        if not url:  # None, '' 등 False 취급되는 값 필터링
-            print(f"[!] Skipping invalid URL at index {idx}")
-            continue
-        filename = name_fn(url, idx) if name_fn else None
-        self.download(url, filename)
-        utils.sleep()
+    def run(self, url_list: list[str | None], save_dir: str, name_fn=None):
+        self.save_dir = save_dir
+        for idx, url in enumerate(url_list):
+            if not url:  # None, '' 등 False 취급되는 값 필터링
+                print(f"[!] Skipping invalid URL at index {idx}")
+                continue
+            filename = name_fn(url, idx) if name_fn else None
+            self.download(url, filename)
+            utils.sleep()
