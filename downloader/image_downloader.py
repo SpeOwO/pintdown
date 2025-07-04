@@ -3,22 +3,22 @@ import requests
 from . import utils
 
 def download_image(url: str | None, save_dir: str, filename: str = None):
-    if url == None:
-        print(f"[✘] download failure: {url} - {e}")
+    if not url:
+        print(f"[✘] download failure: url is None or empty")
         return
 
+    response = None
     try:
-        # request on url
         response = requests.get(url, timeout=10)
         response.raise_for_status()
 
-        # save content as a file
         utils.save_file(response.content, save_dir, filename)
-        print(f"[✔] download succes: {filename}")
-        
+        print(f"[✔] download success: {filename}")
+
     except Exception as e:
         if response and response.status_code == 403 and "originals" in url:
-            url = url.replace("originals", "1200x")
-            download_image(url, save_dir, filename)
+            fallback_url = url.replace("originals", "1200x")
+            print(f"[!] retrying with fallback url: {fallback_url}")
+            download_image(fallback_url, save_dir, filename)
         else:
             print(f"[✘] download failure: {url} - {e}")
