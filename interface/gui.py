@@ -46,7 +46,7 @@ class PinterestApp:
 
         # Progress bar
         tk.Label(root, text="Progress:").pack()
-        self.progress = tk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+        self.progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
         self.progress.pack()
 
         # 로그 텍스트창
@@ -83,6 +83,11 @@ class PinterestApp:
             self.path_entry.delete(0, tk.END)
             self.path_entry.insert(0, folder_selected)
 
+    def update_progress(self, current, total):
+      self.progress["maximum"] = total
+      self.progress["value"] = current
+      self.root.update_idletasks()
+      
     def run_scraper_thread(self):
         threading.Thread(target=self.run_scraper, daemon=True).start()
 
@@ -105,7 +110,8 @@ class PinterestApp:
             downloader.run(
                 url_list=url_list,
                 save_dir=path,
-                name_fn=lambda url, idx: f"pin_{idx}.jpg"
+                name_fn=lambda url, idx: f"pin_{idx}.jpg",
+                progress_callback=self.update_progress
             )
 
             self.logger.info(f"Done: {len(url_list)} images downloaded.")
@@ -114,7 +120,7 @@ class PinterestApp:
             self.logger.error(f"Error occurred: {e}")
             messagebox.showerror("Error", str(e))
 
-
+    
 def main():
     root = tk.Tk()
     app = PinterestApp(root)
