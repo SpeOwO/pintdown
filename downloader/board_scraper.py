@@ -17,7 +17,7 @@ class PinterestScraper:
             page.goto(self.board_url, wait_until="networkidle")
 
             self.original_pin_count = self.get_pin_count(page)
-            self.target_pin_count = self.original_pin_count  # 이건 계속 업데이트됨
+            self.target_pin_count = self.original_pin_count
             print(f"[INFO] Target pin count: {self.target_pin_count}")
 
             while len(self.image_urls) < self.original_pin_count:

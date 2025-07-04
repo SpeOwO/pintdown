@@ -38,7 +38,7 @@ class ImageDownloader:
     def run(self, url_list: list[str | None], save_dir: str, name_fn=None):
         self.save_dir = save_dir
         for idx, url in enumerate(url_list):
-            if not url:  # None, '' 등 False 취급되는 값 필터링
+            if not url:  # filtering
                 print(f"[!] Skipping invalid URL at index {idx}")
                 continue
             filename = name_fn(url, idx) if name_fn else None
