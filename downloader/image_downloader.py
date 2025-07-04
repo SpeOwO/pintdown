@@ -1,29 +1,45 @@
-import os
 import requests
 from . import utils
 
-def download_image(url: str | None, save_dir: str, filename: str = None):
-    if not url:
-        print(f"[✘] download failure: url is None or empty")
-        return
+class ImageDownloader:
+    def __init__(self, save_dir: str, timeout: int = 10):
+        """
+        :param save_dir: directory to save images
+        :param timeout: request timeout in seconds
+        """
+        self.save_dir = save_dir
+        self.timeout = timeout
 
-    response = None
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+    def download(self, url: str | None, filename: str = None):
+        """
+        Download an image from the URL and save it.
+        Retries with a fallback URL if 403 error occurs on original URL.
+        """
+        response = None
+        try:
+            response = requests.get(url, timeout=self.timeout)
+            response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-        if response and response.status_code == 403 and "originals" in url:
-            fallback_url = url.replace("originals", "1200x")
-            print(f"[!] retrying with fallback url: {fallback_url}")
-            download_image(fallback_url, save_dir, filename)
-            
-        else:
-            print(f"[✘] request failed: {url} - {e}")
-        return
+        except requests.exceptions.RequestException as e:
+            if response and response.status_code == 403 and "originals" in url:
+                fallback_url = url.replace("originals", "1200x")
+                print(f"[!] retrying with fallback url: {fallback_url}")
+                self.download(fallback_url, filename)
+            else:
+                print(f"[✘] request failed: {url} - {e}")
+            return
 
-    try:
-        utils.save_file(response.content, save_dir, filename)
-        print(f"[✔] download success: {filename}")
-    except Exception as e:
-        print(f"[✘] file save failed: {filename} - {e}")
+        try:
+            utils.save_file(response.content, self.save_dir, filename)
+            print(f"[✔] download success: {filename}")
+        except Exception as e:
+            print(f"[✘] file save failed: {filename} - {e}")
+
+def run(self, url_list: list[str | None], name_fn=None):
+    for idx, url in enumerate(url_list):
+        if not url:  # None, '' 등 False 취급되는 값 필터링
+            print(f"[!] Skipping invalid URL at index {idx}")
+            continue
+        filename = name_fn(url, idx) if name_fn else None
+        self.download(url, filename)
+        utils.sleep()
