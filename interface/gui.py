@@ -45,9 +45,15 @@ class PinterestApp:
         tk.Button(root, text="Run", command=self.run_scraper_thread).pack()
 
         # Progress bar
-        tk.Label(root, text="Progress:").pack()
-        self.progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
-        self.progress.pack()
+        self.progress_var = tk.IntVar()
+        self.progress_bar = ttk.Progressbar(root, length=400, variable=self.progress_var, maximum=100)
+        self.progress_bar.pack()
+
+        self.progress_label = tk.Label(root, text="0% complete")
+        self.progress_label.pack()
+
+        self.time_label = tk.Label(root, text="Estimated time left: --:--")
+        self.time_label.pack()
 
         # 로그 텍스트창
         tk.Label(root, text="Log:").pack()
@@ -84,9 +90,14 @@ class PinterestApp:
             self.path_entry.insert(0, folder_selected)
 
     def update_progress(self, current, total):
-      self.progress["maximum"] = total
-      self.progress["value"] = current
-      self.root.update_idletasks()
+        percent = int((current / total) * 100)
+        self.progress_var.set(percent)
+        self.progress_label.config(text=f"{percent}% complete")
+
+        eta_seconds = (total - current) * 0.75
+        minutes = int(eta_seconds // 60)
+        seconds = int(eta_seconds % 60)
+        self.time_label.config(text=f"Estimated time left: {minutes:02d}:{seconds:02d}")
       
     def run_scraper_thread(self):
         threading.Thread(target=self.run_scraper, daemon=True).start()

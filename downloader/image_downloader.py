@@ -30,13 +30,18 @@ class ImageDownloader:
             response.raise_for_status()
 
         except requests.exceptions.RequestException as e:
-            if response and response.status_code == 403 and "originals" in url:
+            status_code = None
+            if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
+            
+            if status_code == 403 and "originals" in url:
                 fallback_url = url.replace("originals", "1200x")
-                logger.info(f"Retrying with fallback URL: {fallback_url}")
+                logger.debug(f"Retrying with fallback URL: {fallback_url}")
                 self.download(fallback_url, filename)
             else:
                 logger.error(f"Request failed: {url} - {e}")
             return
+
 
         try:
             utils.save_file(response.content, self.save_dir, filename)

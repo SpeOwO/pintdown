@@ -31,9 +31,13 @@ class PinterestScraper:
             self.target_pin_count = self.original_pin_count
             logger.info(f"found {self.target_pin_count} pins")
 
+            last_result = None
             while len(self.image_urls) < self.original_pin_count:
                 result, src = self.process_grid_item(page, self.grid_idx)
                 self.handle_result(result, src)
+                if result == 'not_loaded' and last_result == 'not_loaded':
+                    break
+                last_result = result
                 self.grid_idx += 1
 
             browser.close()
@@ -56,26 +60,35 @@ class PinterestScraper:
         grid_elem = page.locator(grid_selector)
 
         if grid_elem.count() == 0:
+            logger.debug(f"Grid index {grid_idx} not loaded yet.")
             return "not_loaded", None
 
         try:
             grid_elem.scroll_into_view_if_needed(timeout=1500)
+            logger.debug(f"Scrolled into view: grid index {grid_idx}")
 
             pin_card = grid_elem.locator('[data-test-id="pin"]')
             if pin_card.count() == 0:
+                logger.debug(f"No pin found at grid index {grid_idx}")
                 return "not_pin", None
 
             img_locator = pin_card.locator("img")
             if img_locator.count() == 0:
+                logger.debug(f"No image tag found at grid index {grid_idx}")
                 return "error", None
 
             src = img_locator.get_attribute("src")
-            if src and "originals" not in src:
-                src = src.replace("/236x/", "/originals/")
+            if not src:
+                logger.debug(f"Image src is empty at grid index {grid_idx}")
+                return "error", None
+
+            # Replace low-res with high-res if needed
+            src = src.replace("/236x/", "/originals/")
+
             return "success", src
 
         except Exception as e:
-            logger.error(f"Grid index {grid_idx}: {e}")
+            logger.error(f"Exception at grid index {grid_idx}: {e}")
             return "error", None
 
     def handle_result(self, result: str, src: str | None):
