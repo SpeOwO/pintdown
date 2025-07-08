@@ -1,3 +1,5 @@
 __pycache__/
 
 downloader/__pycache__
+
+*.json
